@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>MediaExtractor | Dev-Hackers</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0f1e;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
+            min-height: 100vh;
+        }
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: linear-gradient(125deg, #0a0f1e 0%, #0f1a2f 30%, #1a2a4a 60%, #2a1a3a 100%);
+            animation: aurora 15s ease infinite;
+        }
+        @keyframes aurora {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; position: relative; z-index: 2; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 40px;
+            background: rgba(26,31,46,0.3);
+            backdrop-filter: blur(12px);
+            padding: 16px 24px;
+            border-radius: 80px;
+            border: 1px solid rgba(59,130,246,0.3);
+        }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3b82f6, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .logo-text {
+            font-size: 1.6rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #3b82f6, #ec4899);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .btn-nav {
+            background: rgba(59,130,246,0.2);
+            border: 1px solid #3b82f6;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+        }
+        .landing {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 70vh;
+            text-align: center;
+        }
+        .landing h1 { font-size: 3.5rem; background: linear-gradient(135deg, #3b82f6, #ec4899); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .landing .sub { font-size: 1.2rem; color: #9aaec0; margin: 20px 0 40px; }
+        .btn-enter {
+            background: linear-gradient(135deg, #3b82f6, #ec4899);
+            border: none;
+            padding: 16px 48px;
+            font-size: 1.2rem;
+            border-radius: 60px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .main-content { display: none; }
+        .card {
+            background: rgba(26,31,46,0.4);
+            backdrop-filter: blur(12px);
+            border-radius: 48px;
+            padding: 32px;
+            border: 1px solid rgba(59,130,246,0.3);
+        }
+        h2 { text-align: center; margin-bottom: 20px; color: #3b82f6; }
+        label { display: block; margin-bottom: 8px; font-weight: 500; }
+        input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 30px;
+            border: 1px solid #2a2f3e;
+            background: rgba(10,15,30,0.6);
+            color: white;
+            margin-bottom: 20px;
+        }
+        button {
+            background: linear-gradient(135deg, #3b82f6, #ec4899);
+            border: none;
+            padding: 14px 28px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(26,31,46,0.4);
+            border-radius: 48px;
+            text-align: center;
+        }
+        .result a { color: #10b981; word-break: break-all; }
+        .btn-contact {
+            background: linear-gradient(135deg, #3b82f6, #ec4899);
+            padding: 12px 24px;
+            border-radius: 40px;
+            margin-top: 20px;
+            width: auto;
+            display: inline-block;
+        }
+        footer { text-align: center; margin-top: 60px; padding: 24px; border-top: 1px solid #2a2f3e; color: #6b7280; }
+        @media (max-width: 600px) { .landing h1 { font-size: 2rem; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid white;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+<div class="animated-bg"></div>
+<div class="container">
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">ME</div>
+            <div class="logo-text">MediaExtractor</div>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-nav" id="themeToggle">🌓 Mode</button>
+        </div>
+    </div>
+
+    <div id="landingPage" class="landing">
+        <h1>MediaExtractor Pro</h1>
+        <div class="sub">Téléchargez vos vidéos depuis YouTube, TikTok, Instagram</div>
+        <button class="btn-enter" id="enterBtn">🚀 Commencer</button>
+    </div>
+
+    <div id="mainContent" class="main-content">
+        <div class="card">
+            <h2>📥 Extraire un média</h2>
+            <label>🔗 Lien de la vidéo</label>
+            <input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+            <button id="extractBtn">🚀 Extraire et télécharger</button>
+            <div id="result" class="result" style="display: none;">
+                <div id="resultContent"></div>
+            </div>
+        </div>
+        <div style="text-align: center;">
+            <button class="btn-contact" id="contactBtn">📞 Contacter le créateur</button>
+        </div>
+    </div>
+
+    <footer>𝙳𝙴𝚅 𝙷𝙰𝙲𝙺𝙴𝚁𝚂 — MediaExtractor Pro | WhatsApp: +33 6 52 12 87 31</footer>
+</div>
+
+<script>
+    document.getElementById('themeToggle').addEventListener('click', () => {
+        document.body.classList.toggle('light');
+    });
+
+    document.getElementById('enterBtn').addEventListener('click', () => {
+        document.getElementById('landingPage').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+    });
+    document.getElementById('contactBtn').addEventListener('click', () => {
+        window.open('https://wa.me/33652128731', '_blank');
+    });
+
+    document.getElementById('extractBtn').addEventListener('click', async () => {
+        const url = document.getElementById('urlInput').value.trim();
+        const resultDiv = document.getElementById('result');
+        const resultContent = document.getElementById('resultContent');
+
+        if (!url) {
+            alert('Entrez un lien valide');
+            return;
+        }
+
+        resultDiv.style.display = 'block';
+        resultContent.innerHTML = '<div class="loader"></div> Extraction en cours...';
+
+        try {
+            // Utilisation de l'API Piped (gratuite, sans clé)
+            const response = await fetch(`https://pipedapi.kavin.rocks/streams?url=${encodeURIComponent(url)}`);
+            const data = await response.json();
+            
+            // Chercher la meilleure qualité vidéo
+            const video = data.videoStreams?.find(s => s.quality === '720p') || 
+                         data.videoStreams?.find(s => s.quality === '480p') || 
+                         data.videoStreams?.[0];
+            
+            if (video && video.url) {
+                resultContent.innerHTML = `
+                    ✅ Extraction réussie !<br><br>
+                    📹 Titre : ${data.title || 'Vidéo'}<br>
+                    🎬 Qualité : ${video.quality || 'HD'}<br><br>
+                    <a href="${video.url}" target="_blank" style="color:#10b981; font-size:1.2rem;">📥 Cliquer ici pour télécharger</a><br><br>
+                    <button id="directDownloadBtn" style="margin-top:10px; background:#10b981;">⬇️ Télécharger directement</button>
+                    <p style="margin-top:15px; font-size:0.8rem;">💡 Conseil : faites un clic droit → "Enregistrer sous" si nécessaire</p>
+                `;
+                document.getElementById('directDownloadBtn')?.addEventListener('click', () => {
+                    window.open(video.url, '_blank');
+                });
+            } else {
+                throw new Error('Aucune vidéo trouvée');
+            }
+        } catch (err) {
+            console.error(err);
+            resultContent.innerHTML = `
+                ❌ Extraction impossible pour ce lien.<br><br>
+                📌 <strong>Liens qui fonctionnent :</strong><br>
+                • YouTube : https://www.youtube.com/watch?v=...<br>
+                • TikTok : https://www.tiktok.com/@user/video/...<br>
+                • Instagram : https://www.instagram.com/reel/...<br><br>
+                🔗 Alternative : <a href="https://en.savefrom.net/" target="_blank" style="color:#3b82f6;">SaveFrom.net</a>
+            `;
+        }
+    });
+</script>
+</body>
+</html>
